@@ -214,6 +214,7 @@ public class PestReturnManager {
             ClientUtils.sendDebugMessage(client, "Pest cleaning sequence finished. Restarting farming...");
             client.execute(() -> {
                 GearManager.swapToFarmingTool(client);
+                AutoGodPotionManager.consumeIfShould(client);
                 ClientUtils.sendDebugMessage(client, "Starting farming script: " + MacroConfig.getFullRestartCommand());
                 com.ihanuat.mod.util.CommandUtils.startScript(client, MacroConfig.getFullRestartCommand(), 0);
             });

@@ -162,7 +162,10 @@ public class VisitorManager {
             RodManager.executeRodSequence(client);
         }
 
-        client.execute(() -> GearManager.swapToFarmingTool(client));
+        client.execute(() -> {
+            GearManager.swapToFarmingTool(client);
+            AutoGodPotionManager.consumeIfShould(client);
+        });
         ClientUtils.sendDebugMessage(client, "Setting state to FARMING and starting script.");
         com.ihanuat.mod.MacroStateManager.setCurrentState(com.ihanuat.mod.MacroState.State.FARMING);
         ClientUtils.sendDebugMessage(client, "Stopping script: Visitor sequence finished, returning to farming");

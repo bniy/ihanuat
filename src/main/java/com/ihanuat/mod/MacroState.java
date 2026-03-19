@@ -8,7 +8,8 @@ public class MacroState {
         RECOVERING,
         VISITING,
         AUTOSELLING,
-        SPRAYING
+        SPRAYING,
+        BUYING_POTION
     }
 
     public enum Location {

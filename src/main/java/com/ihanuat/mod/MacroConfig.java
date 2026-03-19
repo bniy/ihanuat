@@ -102,6 +102,8 @@ public class MacroConfig {
     public static final boolean DEFAULT_GUI_ONLY_IN_GARDEN = true;
     public static final boolean DEFAULT_BREAK_BLOCKS_BEFORE_AOTV = false;
     public static final boolean DEFAULT_DELAY_PEST_FOR_CROP_FEVER = false;
+    public static final boolean DEFAULT_AUTO_GOD_POTION = true;
+    public static final boolean DEFAULT_AUTO_GOD_POTION_BUY_FROM_AH = true;
 
     // Quit Threshold
     public static final double DEFAULT_QUIT_THRESHOLD_HOURS = 0.0;
@@ -216,6 +218,8 @@ public class MacroConfig {
     public static boolean guiOnlyInGarden = DEFAULT_GUI_ONLY_IN_GARDEN;
     public static boolean breakBlocksBeforeAotv = DEFAULT_BREAK_BLOCKS_BEFORE_AOTV;
     public static boolean delayPestForCropFever = DEFAULT_DELAY_PEST_FOR_CROP_FEVER;
+    public static boolean autoGodPotion = DEFAULT_AUTO_GOD_POTION;
+    public static boolean autoGodPotionBuyFromAH = DEFAULT_AUTO_GOD_POTION_BUY_FROM_AH;
     public static double quitThresholdHours = DEFAULT_QUIT_THRESHOLD_HOURS;
     public static boolean forceQuitMinecraft = DEFAULT_FORCE_QUIT_MINECRAFT;
     public static java.util.List<String> petXpTrackedPets = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);
@@ -549,6 +553,8 @@ public class MacroConfig {
         d.guiOnlyInGarden = guiOnlyInGarden;
         d.breakBlocksBeforeAotv = breakBlocksBeforeAotv;
         d.delayPestForCropFever = delayPestForCropFever;
+        d.autoGodPotion = autoGodPotion;
+        d.autoGodPotionBuyFromAH = autoGodPotionBuyFromAH;
         d.quitThresholdHours = quitThresholdHours;
         d.forceQuitMinecraft = forceQuitMinecraft;
         d.petXpTrackedPets = new java.util.ArrayList<>(petXpTrackedPets);
@@ -690,6 +696,8 @@ public class MacroConfig {
             guiOnlyInGarden = d.guiOnlyInGarden;
             breakBlocksBeforeAotv = d.breakBlocksBeforeAotv;
             delayPestForCropFever = d.delayPestForCropFever;
+            autoGodPotion = d.autoGodPotion;
+            autoGodPotionBuyFromAH = d.autoGodPotionBuyFromAH;
             quitThresholdHours = Math.max(0.0, d.quitThresholdHours);
             forceQuitMinecraft = d.forceQuitMinecraft;
             if (d.petXpTrackedPets != null) petXpTrackedPets = new java.util.ArrayList<>(d.petXpTrackedPets);
@@ -875,6 +883,8 @@ public class MacroConfig {
         boolean guiOnlyInGarden = DEFAULT_GUI_ONLY_IN_GARDEN;
         boolean breakBlocksBeforeAotv = DEFAULT_BREAK_BLOCKS_BEFORE_AOTV;
         boolean delayPestForCropFever = DEFAULT_DELAY_PEST_FOR_CROP_FEVER;
+        boolean autoGodPotion = DEFAULT_AUTO_GOD_POTION;
+        boolean autoGodPotionBuyFromAH = DEFAULT_AUTO_GOD_POTION_BUY_FROM_AH;
         double quitThresholdHours = DEFAULT_QUIT_THRESHOLD_HOURS;
         boolean forceQuitMinecraft = DEFAULT_FORCE_QUIT_MINECRAFT;
         java.util.List<String> petXpTrackedPets = new java.util.ArrayList<>(DEFAULT_PET_TRACKER_LIST);

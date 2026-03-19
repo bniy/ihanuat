@@ -26,6 +26,9 @@ import com.ihanuat.mod.modules.RestartManager;
 import com.ihanuat.mod.modules.RodManager;
 import com.ihanuat.mod.modules.RotationManager;
 import com.ihanuat.mod.modules.VisitorManager;
+import com.ihanuat.mod.modules.AutoGodPotionManager;
+import com.ihanuat.mod.modules.AutoGodPotionBuyer;
+import com.ihanuat.mod.modules.QuitThresholdManager;
 import com.ihanuat.mod.modules.WardrobeManager;
 import com.ihanuat.mod.util.ClientUtils;
 
@@ -472,6 +475,7 @@ public class IhanuatClient implements ClientModInitializer {
                 ProfitManager.handleChatMessage(message);
                 PestManager.handlePhillipMessage(Minecraft.getInstance(), text);
                 com.ihanuat.mod.modules.CropFeverManager.handleChatMessage(Minecraft.getInstance(), plainText);
+                AutoGodPotionBuyer.handleChatMessage(plainText);
 
                 com.ihanuat.mod.util.CommandUtils.onChatMessage(plainText);
 
@@ -508,6 +512,49 @@ public class IhanuatClient implements ClientModInitializer {
         ClientSendMessageEvents.COMMAND.register((command) -> {
             if (command.equalsIgnoreCase("call george")) {
                 GeorgeManager.onCallGeorgeSent();
+            }
+
+            // ── Auto God Potion test commands ──
+            if (command.equalsIgnoreCase("testgodpotionbuy")) {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null) {
+                    mc.player.displayClientMessage(
+                            Component.literal("\u00A76[Ihanuat] Testing God Potion AH buyer..."), false);
+                    // Force macro state so start() doesn't bail out
+                    if (!MacroStateManager.isMacroRunning()) {
+                        MacroStateManager.setCurrentState(MacroState.State.FARMING);
+                    }
+                    AutoGodPotionBuyer.start();
+                }
+            }
+
+            if (command.equalsIgnoreCase("testgodpotionconsume")) {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null) {
+                    mc.player.displayClientMessage(
+                            Component.literal("\u00A76[Ihanuat] Testing God Potion consume from inventory..."), false);
+                    mc.player.displayClientMessage(
+                            Component.literal("\u00A7e[Ihanuat] Searching all 36 inventory slots for God Potion..."), false);
+                    AutoGodPotionManager.shouldConsume = true;
+                    AutoGodPotionManager.consumeIfShould(mc);
+                    // Non-hotbar potions will be consumed over next ticks via updateConsume()
+                }
+            }
+
+            if (command.equalsIgnoreCase("testgodpotionfull")) {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.player != null) {
+                    mc.player.displayClientMessage(
+                            Component.literal("\u00A76[Ihanuat] Testing full God Potion system (consume + buy fallback)..."), false);
+                    // Force macro state so buyer can start if needed
+                    if (!MacroStateManager.isMacroRunning()) {
+                        MacroStateManager.setCurrentState(MacroState.State.FARMING);
+                    }
+                    AutoGodPotionManager.shouldConsume = true;
+                    AutoGodPotionManager.lastConsumeTime = 0;
+                    AutoGodPotionManager.consumeIfShould(mc);
+                    // Non-hotbar potions will be consumed over next ticks via updateConsume()
+                }
             }
         });
 
@@ -649,6 +696,9 @@ public class IhanuatClient implements ClientModInitializer {
             ProfitManager.update(client);
             com.ihanuat.mod.modules.DiscordStatusManager.update(client);
             com.ihanuat.mod.modules.CropFeverManager.update(client);
+            AutoGodPotionManager.update(client);
+            AutoGodPotionManager.updateConsume(client);
+            AutoGodPotionBuyer.update(client);
 
             if (PestAotvManager.isSneakingForAotv) {
                 if (client.options != null) {

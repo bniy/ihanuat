@@ -707,6 +707,14 @@ public class ClickGui extends Screen {
 
     private Panel qolPanel(int[] pos) {
         Panel p = makePanel("QOL", pos);
+        p.add(toggle("Auto God Potion", () -> MacroConfig.autoGodPotion, v -> {
+            MacroConfig.autoGodPotion = v;
+            save();
+        }));
+        p.add(toggle("Buy God Potion from AH", () -> MacroConfig.autoGodPotionBuyFromAH, v -> {
+            MacroConfig.autoGodPotionBuyFromAH = v;
+            save();
+        }));
         p.add(toggle("Book Combine", () -> MacroConfig.autoBookCombine, v -> {
             MacroConfig.autoBookCombine = v;
             save();
