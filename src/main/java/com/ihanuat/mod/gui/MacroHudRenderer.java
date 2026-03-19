@@ -145,6 +145,7 @@ public class MacroHudRenderer {
             case VISITING:   stateStr = "visitor";     stateColor = MacroConfig.toArgb(MacroConfig.hudStateVisitingColor); break;
             case AUTOSELLING:stateStr = "autoselling"; stateColor = MacroConfig.toArgb(MacroConfig.hudStateAutosellingColor); break;
             case SPRAYING:   stateStr = "sprayonator"; stateColor = MacroConfig.toArgb(MacroConfig.hudStateSprayingColor); break;
+            case GOD_POTION: stateStr = "farming";  stateColor = MacroConfig.toArgb(MacroConfig.hudStateFarmingColor); break;
             default:         stateStr = "off";         stateColor = MacroConfig.toArgb(MacroConfig.hudStateOffColor); break;
         }
 

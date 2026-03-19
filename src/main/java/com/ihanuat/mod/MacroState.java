@@ -9,7 +9,7 @@ public class MacroState {
         VISITING,
         AUTOSELLING,
         SPRAYING,
-        BUYING_POTION
+        GOD_POTION
     }
 
     public enum Location {

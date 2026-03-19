@@ -198,6 +198,9 @@ public class PestManager {
         if (isPestReentryCooldownActive()) {
             return;
         }
+        if (com.ihanuat.mod.MacroStateManager.getCurrentState() == com.ihanuat.mod.MacroState.State.GOD_POTION) {
+            return;
+        }
 
         if (MacroConfig.delayPestForCropFever && CropFeverManager.isCropFeverActive) {
             client.player.displayClientMessage(

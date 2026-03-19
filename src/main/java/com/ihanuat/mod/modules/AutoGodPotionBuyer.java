@@ -29,6 +29,7 @@ public class AutoGodPotionBuyer {
     }
 
     private static volatile BuyerState currentState = BuyerState.IDLE;
+    public static BuyerState getCurrentState() { return currentState; }
     private static volatile long stateStartTime = 0;
     private static volatile long globalStartTime = 0;
     private static volatile int retryCount = 0;
@@ -46,7 +47,7 @@ public class AutoGodPotionBuyer {
             return;
         }
 
-        MacroStateManager.setCurrentState(MacroState.State.BUYING_POTION);
+        MacroStateManager.setCurrentState(MacroState.State.GOD_POTION);
         currentState = BuyerState.WAIT_AH_OPEN;
         stateStartTime = System.currentTimeMillis();
         globalStartTime = stateStartTime;
@@ -59,11 +60,16 @@ public class AutoGodPotionBuyer {
             ClientUtils.sendDebugMessage(Minecraft.getInstance(), "AutoGodPotionBuyer: Starting purchase sequence (/ahsearch God Potion)");
         }
         
-        ClientUtils.sendCommand(Minecraft.getInstance(), "/ahsearch God Potion");
+        // Use execute() to send on next tick, avoiding command cooldown conflicts
+        Minecraft.getInstance().execute(() -> {
+            if (Minecraft.getInstance().player != null) {
+                Minecraft.getInstance().player.connection.sendCommand("ahsearch God Potion");
+            }
+        });
     }
 
     public static void update(Minecraft client) {
-        if (MacroStateManager.getCurrentState() != MacroState.State.BUYING_POTION) {
+        if (MacroStateManager.getCurrentState() != MacroState.State.GOD_POTION) {
             if (currentState != BuyerState.IDLE) {
                 currentState = BuyerState.IDLE;
             }
@@ -413,7 +419,7 @@ public class AutoGodPotionBuyer {
     }
 
     public static void handleChatMessage(String chatText) {
-        if (MacroStateManager.getCurrentState() != MacroState.State.BUYING_POTION) return;
+        if (MacroStateManager.getCurrentState() != MacroState.State.GOD_POTION) return;
         if (currentState != BuyerState.VERIFYING_PURCHASE && currentState != BuyerState.CONFIRM_BUY_NOW && currentState != BuyerState.CONFIRM_FINAL) return;
         
         String lower = chatText.toLowerCase();
@@ -488,6 +494,8 @@ public class AutoGodPotionBuyer {
             AutoGodPotionManager.consumeIfShould(client);
         }
 
-        MacroStateManager.setCurrentState(MacroState.State.FARMING);
+        MacroState.State restoreTo = AutoGodPotionManager.stateBeforeTest != null ? AutoGodPotionManager.stateBeforeTest : MacroState.State.FARMING;
+        AutoGodPotionManager.stateBeforeTest = null;
+        MacroStateManager.setCurrentState(restoreTo);
     }
 }

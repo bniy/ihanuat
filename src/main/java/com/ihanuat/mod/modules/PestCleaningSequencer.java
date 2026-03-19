@@ -14,7 +14,8 @@ public class PestCleaningSequencer {
     public static void startCleaningSequence(Minecraft client, String plot, String currentInfestedPlot,
             int currentPestSessionId) {
         if (PestManager.isCleaningInProgress || WardrobeManager.isSwappingWardrobe
-                || EquipmentManager.isSwappingEquipment)
+                || EquipmentManager.isSwappingEquipment
+                || com.ihanuat.mod.MacroStateManager.getCurrentState() == com.ihanuat.mod.MacroState.State.GOD_POTION)
             return;
 
         ClientUtils.sendDebugMessage(client,

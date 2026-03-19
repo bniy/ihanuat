@@ -520,10 +520,10 @@ public class IhanuatClient implements ClientModInitializer {
                 if (mc.player != null) {
                     mc.player.displayClientMessage(
                             Component.literal("\u00A76[Ihanuat] Testing God Potion AH buyer..."), false);
-                    // Force macro state so start() doesn't bail out
-                    if (!MacroStateManager.isMacroRunning()) {
-                        MacroStateManager.setCurrentState(MacroState.State.FARMING);
-                    }
+                    MacroWorkerThread.getInstance().cancelCurrent();
+                    com.ihanuat.mod.modules.PestManager.isCleaningInProgress = false;
+                    AutoGodPotionManager.stateBeforeTest = MacroStateManager.getCurrentState();
+                    MacroStateManager.setCurrentState(MacroState.State.GOD_POTION);
                     AutoGodPotionBuyer.start();
                 }
             }
@@ -533,9 +533,12 @@ public class IhanuatClient implements ClientModInitializer {
                 if (mc.player != null) {
                     mc.player.displayClientMessage(
                             Component.literal("\u00A76[Ihanuat] Testing God Potion consume from inventory..."), false);
-                    mc.player.displayClientMessage(
-                            Component.literal("\u00A7e[Ihanuat] Searching all 36 inventory slots for God Potion..."), false);
+                    MacroWorkerThread.getInstance().cancelCurrent();
+                    com.ihanuat.mod.modules.PestManager.isCleaningInProgress = false;
+                    AutoGodPotionManager.stateBeforeTest = MacroStateManager.getCurrentState();
+                    MacroStateManager.setCurrentState(MacroState.State.GOD_POTION);
                     AutoGodPotionManager.shouldConsume = true;
+                    AutoGodPotionManager.forceTest = true;
                     AutoGodPotionManager.consumeIfShould(mc);
                     // Non-hotbar potions will be consumed over next ticks via updateConsume()
                 }
@@ -546,12 +549,13 @@ public class IhanuatClient implements ClientModInitializer {
                 if (mc.player != null) {
                     mc.player.displayClientMessage(
                             Component.literal("\u00A76[Ihanuat] Testing full God Potion system (consume + buy fallback)..."), false);
-                    // Force macro state so buyer can start if needed
-                    if (!MacroStateManager.isMacroRunning()) {
-                        MacroStateManager.setCurrentState(MacroState.State.FARMING);
-                    }
+                    MacroWorkerThread.getInstance().cancelCurrent();
+                    com.ihanuat.mod.modules.PestManager.isCleaningInProgress = false;
+                    AutoGodPotionManager.stateBeforeTest = MacroStateManager.getCurrentState();
+                    MacroStateManager.setCurrentState(MacroState.State.GOD_POTION);
                     AutoGodPotionManager.shouldConsume = true;
                     AutoGodPotionManager.lastConsumeTime = 0;
+                    AutoGodPotionManager.forceTest = true;
                     AutoGodPotionManager.consumeIfShould(mc);
                     // Non-hotbar potions will be consumed over next ticks via updateConsume()
                 }
@@ -636,7 +640,8 @@ public class IhanuatClient implements ClientModInitializer {
             MacroState.State macroState = MacroStateManager.getCurrentState();
             if (macroState != MacroState.State.OFF
                     && macroState != MacroState.State.RECOVERING
-                    && macroState != MacroState.State.FARMING) {
+                    && macroState != MacroState.State.FARMING
+                    && macroState != MacroState.State.GOD_POTION) {
                 MacroState.Location currentLocation = ClientUtils.getCurrentLocation(client);
                 if (currentLocation != MacroState.Location.GARDEN) {
                     long now = System.currentTimeMillis();
@@ -660,45 +665,52 @@ public class IhanuatClient implements ClientModInitializer {
                 }
             }
 
-            if (client.screen instanceof AbstractContainerScreen) {
-                AbstractContainerScreen<?> currentScreen = (AbstractContainerScreen<?>) client.screen;
-                String currentTitle = currentScreen.getTitle().getString().toLowerCase();
-                lastScreenWasBoosterCookie = currentTitle.equals("booster cookie");
-                GearManager.handleWardrobeMenu(client, currentScreen);
-                if (client.screen == currentScreen)
-                    GearManager.handleEquipmentMenu(client, currentScreen);
-                if (client.screen == currentScreen)
-                    GeorgeManager.handleGeorgeMenu(client, currentScreen);
-                if (client.screen == currentScreen)
-                    BoosterCookieManager.handleBoosterCookieMenu(client, currentScreen);
-                if (client.screen == currentScreen)
-                    BookCombineManager.handleAnvilMenu(client, currentScreen);
-                if (client.screen == currentScreen)
-                    JunkManager.handleInventoryMenu(client, currentScreen);
+            // When buying God Potion, skip all other screen/manager handlers to avoid interference
+            if (MacroStateManager.getCurrentState() == MacroState.State.GOD_POTION) {
+                AutoGodPotionBuyer.update(client);
+                AutoGodPotionManager.updateConsume(client);
+                MacroStateManager.periodicUpdate();
             } else {
-                if (lastScreenWasBoosterCookie) {
-                    BoosterCookieManager.onMenuClosed();
+                if (client.screen instanceof AbstractContainerScreen) {
+                    AbstractContainerScreen<?> currentScreen = (AbstractContainerScreen<?>) client.screen;
+                    String currentTitle = currentScreen.getTitle().getString().toLowerCase();
+                    lastScreenWasBoosterCookie = currentTitle.equals("booster cookie");
+                    GearManager.handleWardrobeMenu(client, currentScreen);
+                    if (client.screen == currentScreen)
+                        GearManager.handleEquipmentMenu(client, currentScreen);
+                    if (client.screen == currentScreen)
+                        GeorgeManager.handleGeorgeMenu(client, currentScreen);
+                    if (client.screen == currentScreen)
+                        BoosterCookieManager.handleBoosterCookieMenu(client, currentScreen);
+                    if (client.screen == currentScreen)
+                        BookCombineManager.handleAnvilMenu(client, currentScreen);
+                    if (client.screen == currentScreen)
+                        JunkManager.handleInventoryMenu(client, currentScreen);
+                } else {
+                    if (lastScreenWasBoosterCookie) {
+                        BoosterCookieManager.onMenuClosed();
+                    }
+                    lastScreenWasBoosterCookie = false;
                 }
-                lastScreenWasBoosterCookie = false;
+
+                GeorgeManager.update(client);
+                BookCombineManager.update(client);
+                JunkManager.update(client);
+
+                DynamicRestManager.update(client);
+                QuitThresholdManager.update(client);
+                RestartManager.update(client);
+                PestManager.update(client);
+                GearManager.cleanupTick(client);
+                RotationManager.update(client);
+                MacroStateManager.periodicUpdate();
+                ProfitManager.update(client);
+                com.ihanuat.mod.modules.DiscordStatusManager.update(client);
+                com.ihanuat.mod.modules.CropFeverManager.update(client);
+                AutoGodPotionManager.update(client);
+                AutoGodPotionManager.updateConsume(client);
+                AutoGodPotionBuyer.update(client);
             }
-
-            GeorgeManager.update(client);
-            BookCombineManager.update(client);
-            JunkManager.update(client);
-
-            DynamicRestManager.update(client);
-            QuitThresholdManager.update(client); // check quit threshold each tick
-            RestartManager.update(client);
-            PestManager.update(client);
-            GearManager.cleanupTick(client);
-            RotationManager.update(client);
-            MacroStateManager.periodicUpdate();
-            ProfitManager.update(client);
-            com.ihanuat.mod.modules.DiscordStatusManager.update(client);
-            com.ihanuat.mod.modules.CropFeverManager.update(client);
-            AutoGodPotionManager.update(client);
-            AutoGodPotionManager.updateConsume(client);
-            AutoGodPotionBuyer.update(client);
 
             if (PestAotvManager.isSneakingForAotv) {
                 if (client.options != null) {

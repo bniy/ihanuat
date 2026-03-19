@@ -11,6 +11,8 @@ public class AutoGodPotionManager {
     public static volatile boolean shouldConsume = false;
 
     public static volatile long lastPassiveCheck = 0;
+    public static volatile boolean forceTest = false;
+    public static volatile com.ihanuat.mod.MacroState.State stateBeforeTest = null;
 
     // Consume state machine
     private enum ConsumeState { IDLE, SWAP_TO_HOTBAR, CLOSE_AND_USE, REOPEN_INVENTORY, SWAP_BACK, CLOSE_DONE }
@@ -75,11 +77,12 @@ public class AutoGodPotionManager {
     public static void consumeIfShould(Minecraft client) {
         if (!shouldConsume || client.player == null) return;
 
-        // Final sanity check to avoid drinking multiple
-        if (hasGodPotionActive(client)) {
+        // Final sanity check to avoid drinking multiple (skip if force testing)
+        if (!forceTest && hasGodPotionActive(client)) {
             shouldConsume = false;
             return;
         }
+        forceTest = false;
 
         long now = System.currentTimeMillis();
         if (now - lastConsumeTime < 5000) return;
@@ -109,6 +112,12 @@ public class AutoGodPotionManager {
                 inv.setSelected(previousSelected);
                 lastConsumeTime = now;
                 shouldConsume = false;
+                if (com.ihanuat.mod.MacroStateManager.getCurrentState() == com.ihanuat.mod.MacroState.State.GOD_POTION
+                        && AutoGodPotionBuyer.getCurrentState() == AutoGodPotionBuyer.BuyerState.IDLE) {
+                    com.ihanuat.mod.MacroState.State restoreTo = stateBeforeTest != null ? stateBeforeTest : com.ihanuat.mod.MacroState.State.FARMING;
+                    stateBeforeTest = null;
+                    com.ihanuat.mod.MacroStateManager.setCurrentState(restoreTo);
+                }
                 if (MacroConfig.showDebug) {
                     ClientUtils.sendDebugMessage(client, "AutoGodPotion: Consumed from hotbar slot " + foundSlot);
                 }
@@ -149,28 +158,28 @@ public class AutoGodPotionManager {
 
         switch (consumeState) {
             case SWAP_TO_HOTBAR:
-                // Open inventory and swap god potion to hotbar slot 8
-                if (now - consumeStateTime < 300) return;
+                // Open inventory and swap god potion to hotbar slot 7 (slot 8 is SkyBlock menu)
+                if (now - consumeStateTime < 500) return;
                 client.gameMode.handleInventoryMouseClick(
-                    client.player.inventoryMenu.containerId, potionSlot, 8,
+                    client.player.inventoryMenu.containerId, potionSlot, 7,
                     net.minecraft.world.inventory.ClickType.SWAP, client.player);
                 if (MacroConfig.showDebug) {
-                    ClientUtils.sendDebugMessage(client, "AutoGodPotion: Swapped slot " + potionSlot + " to hotbar slot 8");
+                    ClientUtils.sendDebugMessage(client, "AutoGodPotion: Swapped slot " + potionSlot + " to hotbar slot 7");
                 }
                 consumeState = ConsumeState.CLOSE_AND_USE;
                 consumeStateTime = now;
                 break;
 
             case CLOSE_AND_USE:
-                // Wait for swap to register, then use the item from hotbar slot 8
-                if (now - consumeStateTime < 300) return;
+                // Wait for swap to register, then use the item from hotbar slot 7
+                if (now - consumeStateTime < 600) return;
                 if (client.screen != null) {
                     client.setScreen(null);
                 }
-                inv.setSelected(8);
+                inv.setSelected(7);
                 client.gameMode.useItem(client.player, InteractionHand.MAIN_HAND);
                 if (MacroConfig.showDebug) {
-                    ClientUtils.sendDebugMessage(client, "AutoGodPotion: Using God Potion from hotbar slot 8");
+                    ClientUtils.sendDebugMessage(client, "AutoGodPotion: Using God Potion from hotbar slot 7");
                 }
                 consumeState = ConsumeState.SWAP_BACK;
                 consumeStateTime = now;
@@ -178,12 +187,12 @@ public class AutoGodPotionManager {
 
             case SWAP_BACK:
                 // Wait for use to register, then swap original item back
-                if (now - consumeStateTime < 500) return;
+                if (now - consumeStateTime < 800) return;
                 client.gameMode.handleInventoryMouseClick(
-                    client.player.inventoryMenu.containerId, potionSlot, 8,
+                    client.player.inventoryMenu.containerId, potionSlot, 7,
                     net.minecraft.world.inventory.ClickType.SWAP, client.player);
                 if (MacroConfig.showDebug) {
-                    ClientUtils.sendDebugMessage(client, "AutoGodPotion: Swapped hotbar slot 8 back to slot " + potionSlot);
+                    ClientUtils.sendDebugMessage(client, "AutoGodPotion: Swapped hotbar slot 7 back to slot " + potionSlot);
                 }
                 consumeState = ConsumeState.CLOSE_DONE;
                 consumeStateTime = now;
@@ -191,7 +200,7 @@ public class AutoGodPotionManager {
 
             case CLOSE_DONE:
                 // Restore selected slot and clean up
-                if (now - consumeStateTime < 200) return;
+                if (now - consumeStateTime < 400) return;
                 if (client.screen != null) {
                     client.setScreen(null);
                 }
@@ -201,6 +210,12 @@ public class AutoGodPotionManager {
                 consumeState = ConsumeState.IDLE;
                 potionSlot = -1;
                 previousSelected = -1;
+                if (com.ihanuat.mod.MacroStateManager.getCurrentState() == com.ihanuat.mod.MacroState.State.GOD_POTION
+                        && AutoGodPotionBuyer.getCurrentState() == AutoGodPotionBuyer.BuyerState.IDLE) {
+                    com.ihanuat.mod.MacroState.State restoreTo = stateBeforeTest != null ? stateBeforeTest : com.ihanuat.mod.MacroState.State.FARMING;
+                    stateBeforeTest = null;
+                    com.ihanuat.mod.MacroStateManager.setCurrentState(restoreTo);
+                }
                 if (MacroConfig.showDebug) {
                     ClientUtils.sendDebugMessage(client, "AutoGodPotion: Consume sequence complete.");
                 }
