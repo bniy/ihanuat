@@ -491,11 +491,12 @@ public class AutoGodPotionBuyer {
 
         if (purchaseSucceeded) {
             AutoGodPotionManager.shouldConsume = true;
+            AutoGodPotionManager.forceTest = true;
             AutoGodPotionManager.consumeIfShould(client);
+        } else {
+            MacroState.State restoreTo = AutoGodPotionManager.stateBeforeTest != null ? AutoGodPotionManager.stateBeforeTest : MacroState.State.FARMING;
+            AutoGodPotionManager.stateBeforeTest = null;
+            MacroStateManager.setCurrentState(restoreTo);
         }
-
-        MacroState.State restoreTo = AutoGodPotionManager.stateBeforeTest != null ? AutoGodPotionManager.stateBeforeTest : MacroState.State.FARMING;
-        AutoGodPotionManager.stateBeforeTest = null;
-        MacroStateManager.setCurrentState(restoreTo);
     }
 }
