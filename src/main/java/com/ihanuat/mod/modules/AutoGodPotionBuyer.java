@@ -89,7 +89,7 @@ public class AutoGodPotionBuyer {
                 break;
                 
             case WAIT_AH_OPEN:
-                if (now - stateStartTime < 500) return;
+                if (now - stateStartTime < 625) return;
                 
                 if (client.screen instanceof AbstractContainerScreen) {
                     AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) client.screen;
@@ -103,7 +103,7 @@ public class AutoGodPotionBuyer {
                 break;
                 
             case VERIFY_SORT_BIN:
-                if (now - stateStartTime < 500) return; // Wait for GUI items to populate
+                if (now - stateStartTime < 625) return; // Wait for GUI items to populate
                 
                 if (client.screen instanceof AbstractContainerScreen) {
                     AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) client.screen;
@@ -163,7 +163,7 @@ public class AutoGodPotionBuyer {
                 break;
                 
             case CLICK_GOD_POTION:
-                if (now - stateStartTime < 500) return;
+                if (now - stateStartTime < 625) return;
                 
                 if (client.screen instanceof AbstractContainerScreen) {
                     AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) client.screen;
@@ -205,7 +205,7 @@ public class AutoGodPotionBuyer {
                 
             case CONFIRM_BUY_NOW:
                 // First confirm screen: click the Gold Nugget named "Buy Item Right Now"
-                if (now - stateStartTime < 500) return;
+                if (now - stateStartTime < 625) return;
                 
                 if (client.screen instanceof AbstractContainerScreen) {
                     AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) client.screen;
@@ -227,7 +227,7 @@ public class AutoGodPotionBuyer {
                 
             case CONFIRM_FINAL:
                 // Second confirm screen: click the Green Concrete named "Confirm"
-                if (now - stateStartTime < 500) return;
+                if (now - stateStartTime < 625) return;
                 
                 if (client.screen instanceof AbstractContainerScreen) {
                     AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) client.screen;
@@ -249,7 +249,7 @@ public class AutoGodPotionBuyer {
                 
             case VERIFYING_PURCHASE:
                 // Give it 2 seconds to get a chat response
-                if (now - stateStartTime > 2000) {
+                if (now - stateStartTime > 2500) {
                     // No chat message received — assume success and try to claim
                     if (MacroConfig.showDebug) {
                         ClientUtils.sendDebugMessage(client, "AutoGodPotionBuyer: No failure message received. Opening AH to claim...");
@@ -264,7 +264,7 @@ public class AutoGodPotionBuyer {
             
             case CLAIM_OPEN_AH:
                 // Open /ah to get to the Auction House main menu
-                if (now - stateStartTime < 500) return;
+                if (now - stateStartTime < 625) return;
 
                 if (client.screen == null) {
                     ClientUtils.sendCommand(client, "/ah");
@@ -282,7 +282,7 @@ public class AutoGodPotionBuyer {
 
             case CLAIM_MANAGE_BIDS:
                 // Click the golden carrot named "Manage Bids"
-                if (now - stateStartTime < 500) return;
+                if (now - stateStartTime < 625) return;
 
                 if (client.screen instanceof AbstractContainerScreen) {
                     AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) client.screen;
@@ -306,7 +306,7 @@ public class AutoGodPotionBuyer {
 
             case CLAIM_CLICK_POTION:
                 // Click the God Potion in the Manage Bids menu
-                if (now - stateStartTime < 500) return;
+                if (now - stateStartTime < 625) return;
 
                 if (client.screen instanceof AbstractContainerScreen) {
                     AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) client.screen;
@@ -337,7 +337,7 @@ public class AutoGodPotionBuyer {
 
             case CLAIM_COLLECT_AUCTION:
                 // Click the gold block named "Collect Auction"
-                if (now - stateStartTime < 500) return;
+                if (now - stateStartTime < 625) return;
 
                 if (client.screen instanceof AbstractContainerScreen) {
                     AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) client.screen;
@@ -357,7 +357,7 @@ public class AutoGodPotionBuyer {
                     }
 
                     // Check if we got the potion after clicking
-                    if (now - stateStartTime > 1000) {
+                    if (now - stateStartTime > 1250) {
                         if (hasGodPotionInInventory(client)) {
                             if (MacroConfig.showDebug) {
                                 ClientUtils.sendDebugMessage(client, "AutoGodPotionBuyer: God Potion collected successfully!");
@@ -380,7 +380,7 @@ public class AutoGodPotionBuyer {
 
             case PURCHASE_FAILED_REOPEN:
                 // After a failed purchase, we need to go back to the AH search results
-                if (now - stateStartTime < 500) return;
+                if (now - stateStartTime < 625) return;
                 
                 if (client.screen instanceof AbstractContainerScreen) {
                     AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) client.screen;
