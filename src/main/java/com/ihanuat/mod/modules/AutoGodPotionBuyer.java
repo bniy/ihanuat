@@ -400,15 +400,14 @@ public class AutoGodPotionBuyer {
                         stateStartTime = now;
                         ClientUtils.sendCommand(client, "/ahsearch God Potion");
                         currentState = BuyerState.WAIT_AH_OPEN;
-                        // Reset slot tracking since it's a fresh search
-                        lastClickedSlotIndex = -1;
+                        // Keep lastClickedSlotIndex so we skip the sniped slot
                     }
                 } else {
                     // No screen open — need to re-search
                     ClientUtils.sendCommand(client, "/ahsearch God Potion");
                     currentState = BuyerState.WAIT_AH_OPEN;
                     stateStartTime = now;
-                    lastClickedSlotIndex = -1;
+                    // Keep lastClickedSlotIndex so we skip the sniped slot
                 }
                 break;
                 
