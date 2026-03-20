@@ -264,10 +264,10 @@ public class ClickGui extends Screen {
         } catch (Exception e) { return false; }
     }
 
-    private static final int PANEL_W = 180;
-    private static final int HEADER_H = 18;
-    private static final int ENTRY_H = 18;
-    private static final int ENTRY_PAD = 3;
+    static final int PANEL_W = 180;
+    static final int HEADER_H = 18;
+    static final int ENTRY_H = 18;
+    static final int ENTRY_PAD = 3;
     private static final int PANEL_RADIUS = 4;
     private static final int SEARCH_H = 16;
 
@@ -297,6 +297,7 @@ public class ClickGui extends Screen {
     private boolean dragMovedPanel = false;
     private SliderEntry draggingSlider = null;
     private Panel draggingSliderPanel = null;
+    private int draggingSliderIndent = 0;
     private Panel scrollbarPanel = null;
     private int scrollbarDragStartY, scrollbarDragStartOffset;
 
@@ -1344,10 +1345,12 @@ public class ClickGui extends Screen {
                 Entry hit = panel.entryAt(x, y, searchQuery);
                 if (hit != null) {
                     if (btn == 0) {
-                        if (hit instanceof SliderEntry se && !se.valueContains(x, y, panel.x + ENTRY_PAD, panel.entryY(hit, searchQuery), PANEL_W - ENTRY_PAD * 2, ENTRY_H, font)) {
+                        int sIndent = SectionEntry.isChildOfSection(panel.filtered(searchQuery), hit) ? SectionEntry.INDENT : 0;
+                        if (hit instanceof SliderEntry se && !se.valueContains(x, y, panel.x + ENTRY_PAD + sIndent, panel.entryY(hit, searchQuery), PANEL_W - ENTRY_PAD * 2 - sIndent, ENTRY_H, font)) {
                             draggingSlider = se;
                             draggingSliderPanel = panel;
-                            se.onDrag(x, panel.x + ENTRY_PAD + 2, PANEL_W - ENTRY_PAD * 2 - 4);
+                            draggingSliderIndent = sIndent;
+                            se.onDrag(x, panel.x + ENTRY_PAD + sIndent + 2, PANEL_W - ENTRY_PAD * 2 - sIndent - 4);
                         } else {
                             SubPanel sp = hit.openSubPanel(x, y, width, height);
                             if (sp != null) activeSubPanel = sp;
@@ -1399,7 +1402,7 @@ public class ClickGui extends Screen {
         } else if (scrollbarPanel != null) {
             scrollbarPanel.dragScrollbar(y, scrollbarDragStartY, scrollbarDragStartOffset, searchQuery);
         } else if (draggingSlider != null && draggingSliderPanel != null) {
-            draggingSlider.onDrag(x, draggingSliderPanel.x + ENTRY_PAD + 2, PANEL_W - ENTRY_PAD * 2 - 4);
+            draggingSlider.onDrag(x, draggingSliderPanel.x + ENTRY_PAD + draggingSliderIndent + 2, PANEL_W - ENTRY_PAD * 2 - draggingSliderIndent - 4);
         }
     }
 
@@ -1571,11 +1574,14 @@ public class ClickGui extends Screen {
             if (e instanceof ScriptSelectorEntry) return "Farm Script";
             if (e instanceof ColorEntry ce) return ce.label;
             if (e instanceof ImportCodeEntry) return "Paste Theme Code";
+            if (e instanceof SectionEntry se) return se.getSearchText();
             return "";
         }
 
         int contentHeight(String q) {
-            return filtered(q).size() * (ENTRY_H + ENTRY_PAD) + ENTRY_PAD;
+            List<Entry> list = filtered(q);
+            if (SectionEntry.hasSections(list)) return SectionEntry.contentHeight(list);
+            return list.size() * (ENTRY_H + ENTRY_PAD) + ENTRY_PAD;
         }
 
         int visibleHeight() {
@@ -1597,8 +1603,11 @@ public class ClickGui extends Screen {
 
         Entry entryAt(int mx, int my, String q) {
             if (collapsed || filtered(q).isEmpty() || mx > x + PANEL_W - 4) return null;
+            List<Entry> list = filtered(q);
+            if (SectionEntry.hasSections(list))
+                return SectionEntry.entryAt(list, x, y + HEADER_H + ENTRY_PAD - scrollOffset, mx, my);
             int ey = y + HEADER_H + ENTRY_PAD - scrollOffset;
-            for (Entry e : filtered(q)) {
+            for (Entry e : list) {
                 if (my >= ey && my < ey + ENTRY_H && mx >= x && mx <= x + PANEL_W) return e;
                 ey += ENTRY_H + ENTRY_PAD;
             }
@@ -1606,12 +1615,16 @@ public class ClickGui extends Screen {
         }
 
         int entryY(Entry target, String q) {
-            int ey = y + HEADER_H + ENTRY_PAD - scrollOffset;
-            for (Entry e : filtered(q)) {
+            int startY = y + HEADER_H + ENTRY_PAD - scrollOffset;
+            List<Entry> list = filtered(q);
+            if (SectionEntry.hasSections(list))
+                return SectionEntry.entryY(list, startY, target);
+            int ey = startY;
+            for (Entry e : list) {
                 if (e == target) return ey;
                 ey += ENTRY_H + ENTRY_PAD;
             }
-            return y + HEADER_H + ENTRY_PAD;
+            return startY;
         }
 
         boolean scrollbarContains(int mx, int my, String q) {
@@ -1651,11 +1664,15 @@ public class ClickGui extends Screen {
             int clipY = y + HEADER_H, clipH = Math.min(contentHeight(q), visibleHeight());
             g.enableScissor(x, clipY, x + PANEL_W, clipY + clipH);
             int ey = clipY + ENTRY_PAD - scrollOffset;
-            for (Entry e : filtered) {
-                boolean hov = mx >= x && mx <= x + PANEL_W && my >= ey && my < ey + ENTRY_H;
-                if (hov) g.fill(x + 1, ey, x + PANEL_W - 1, ey + ENTRY_H, C_HOVER());
-                e.render(g, x + ENTRY_PAD, ey, PANEL_W - ENTRY_PAD * 2, ENTRY_H, hov, font);
-                ey += ENTRY_H + ENTRY_PAD;
+            if (SectionEntry.hasSections(filtered)) {
+                SectionEntry.renderEntries(g, filtered, x, ey, mx, my, font);
+            } else {
+                for (Entry e : filtered) {
+                    boolean hov = mx >= x && mx <= x + PANEL_W && my >= ey && my < ey + ENTRY_H;
+                    if (hov) g.fill(x + 1, ey, x + PANEL_W - 1, ey + ENTRY_H, C_HOVER());
+                    e.render(g, x + ENTRY_PAD, ey, PANEL_W - ENTRY_PAD * 2, ENTRY_H, hov, font);
+                    ey += ENTRY_H + ENTRY_PAD;
+                }
             }
             g.disableScissor();
             if (maxScroll(q) > 0) {
@@ -1675,6 +1692,10 @@ public class ClickGui extends Screen {
 
         default SubPanel openSubPanel(int mx, int my, int sw, int sh) {
             return null;
+        }
+
+        default int height() {
+            return ENTRY_H;
         }
     }
 
